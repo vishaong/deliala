@@ -16,6 +16,13 @@ function TrackingDetail() {
     carrierName: ''
   });
 
+  const getStatusText = (trackingResult) => {
+    if (!trackingResult) return '정보 없음';
+    const noEvents = !trackingResult.trackingDetails || trackingResult.trackingDetails.length === 0;
+    if (noEvents) return '미출고';
+    return trackingResult.complete ? '배송완료' : '배송중';
+  };
+
   useEffect(() => {
     loadTrackingData();
   }, [trackingNumber]);
@@ -201,7 +208,7 @@ function TrackingDetail() {
           <div className="info-item">
             <div className="info-label">배송 상태</div>
             <div className="info-value">
-              {trackingData.trackingResult?.complete ? '배송완료' : '배송중'}
+              {getStatusText(trackingData.trackingResult)}
             </div>
           </div>
           <div className="info-item">

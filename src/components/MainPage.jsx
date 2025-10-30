@@ -127,6 +127,8 @@ function MainPage() {
   // 배송 상태 텍스트 변환
   const getStatusText = (trackingResult) => {
     if (!trackingResult) return '정보 없음';
+    const noEvents = !trackingResult.trackingDetails || trackingResult.trackingDetails.length === 0;
+    if (noEvents) return '미출고';
     return trackingResult.complete ? '배송완료' : '배송중';
   };
 
