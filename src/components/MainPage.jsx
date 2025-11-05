@@ -32,8 +32,17 @@ function MainPage() {
     try {
       const response = await getCarrierList();
       setCarriers(response.Company || []);
+      // 성공 시 에러 메시지 초기화
+      if (error && error.includes('API 키')) {
+        setError('');
+      }
     } catch (err) {
-      setError('택배사 목록을 불러오는데 실패했습니다.');
+      console.error('택배사 목록 로드 오류:', err);
+      if (err.message && err.message.includes('API 키')) {
+        setError('API 키가 설정되지 않았습니다. 설정 페이지에서 API 키를 입력해주세요.');
+      } else {
+        setError(err.message || '택배사 목록을 불러오는데 실패했습니다.');
+      }
     }
   };
 
@@ -163,14 +172,22 @@ function MainPage() {
               value={selectedCarrier}
               onChange={(e) => setSelectedCarrier(e.target.value)}
               required
+              disabled={carriers.length === 0}
             >
-              <option value="">택배사를 선택하세요</option>
+              <option value="">
+                {carriers.length === 0 ? '택배사 목록을 불러오는 중...' : '택배사를 선택하세요'}
+              </option>
               {carriers.map((carrier) => (
                 <option key={carrier.Code} value={carrier.Code}>
                   {carrier.Name}
                 </option>
               ))}
             </select>
+            {carriers.length === 0 && !error && (
+              <small style={{ color: '#7f8c8d', marginTop: '5px', display: 'block' }}>
+                택배사 목록을 불러오는 중입니다...
+              </small>
+            )}
           </div>
           <div className="form-group">
             <label htmlFor="trackingNumbers">송장번호 (여러 개 입력 가능)</label>
@@ -194,7 +211,18 @@ function MainPage() {
       {/* 에러 메시지 */}
       {error && (
         <div className="error">
-          {error}
+          <div style={{ marginBottom: error.includes('API 키') ? '10px' : '0' }}>
+            {error}
+          </div>
+          {error.includes('API 키') && (
+            <button 
+              onClick={() => navigate('/settings')} 
+              className="btn"
+              style={{ marginTop: '10px', width: 'auto' }}
+            >
+              설정 페이지로 이동
+            </button>
+          )}
         </div>
       )}
 
