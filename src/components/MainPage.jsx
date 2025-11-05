@@ -12,6 +12,7 @@ function MainPage() {
   const [trackingList, setTrackingList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedTrackings, setSelectedTrackings] = useState(new Set());
 
   // 컴포넌트 마운트 시 택배사 목록과 저장된 송장 데이터 로드
   useEffect(() => {
@@ -50,6 +51,17 @@ function MainPage() {
   const loadTrackingList = () => {
     const data = getTrackingData();
     setTrackingList(data);
+    // 목록이 변경되면 선택 상태도 초기화 (삭제된 항목 제거)
+    setSelectedTrackings(prev => {
+      const newSet = new Set();
+      const trackingNumbers = new Set(data.map(item => item.trackingNumber));
+      prev.forEach(num => {
+        if (trackingNumbers.has(num)) {
+          newSet.add(num);
+        }
+      });
+      return newSet;
+    });
   };
 
   // 송장번호 입력 처리 (스페이스, 엔터, 쉼표로 구분)
@@ -129,6 +141,52 @@ function MainPage() {
   const handleDeleteTracking = (trackingNumber) => {
     if (window.confirm('이 송장을 삭제하시겠습니까?')) {
       deleteTrackingData(trackingNumber);
+      loadTrackingList();
+      // 선택 목록에서도 제거
+      setSelectedTrackings(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(trackingNumber);
+        return newSet;
+      });
+    }
+  };
+
+  // 개별 송장 선택/해제
+  const handleToggleTracking = (trackingNumber) => {
+    setSelectedTrackings(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(trackingNumber)) {
+        newSet.delete(trackingNumber);
+      } else {
+        newSet.add(trackingNumber);
+      }
+      return newSet;
+    });
+  };
+
+  // 전체 선택/해제
+  const handleToggleAll = () => {
+    if (selectedTrackings.size === trackingList.length) {
+      // 모두 선택된 경우 모두 해제
+      setSelectedTrackings(new Set());
+    } else {
+      // 모두 선택
+      setSelectedTrackings(new Set(trackingList.map(item => item.trackingNumber)));
+    }
+  };
+
+  // 선택된 송장 일괄 삭제
+  const handleDeleteSelected = () => {
+    if (selectedTrackings.size === 0) {
+      return;
+    }
+
+    const count = selectedTrackings.size;
+    if (window.confirm(`선택한 ${count}개의 송장을 삭제하시겠습니까?`)) {
+      selectedTrackings.forEach(trackingNumber => {
+        deleteTrackingData(trackingNumber);
+      });
+      setSelectedTrackings(new Set());
       loadTrackingList();
     }
   };
@@ -229,13 +287,46 @@ function MainPage() {
       {/* 송장 목록 */}
       {trackingList.length > 0 && (
         <div className="card">
-          <h2>송장 목록 ({trackingList.length}개)</h2>
+          <div className="tracking-list-header">
+            <h2>송장 목록 ({trackingList.length}개)</h2>
+            <div className="tracking-list-actions">
+              {selectedTrackings.size > 0 && (
+                <>
+                  <span className="selected-count">
+                    {selectedTrackings.size}개 선택됨
+                  </span>
+                  <button
+                    onClick={handleDeleteSelected}
+                    className="btn-small btn-danger"
+                  >
+                    선택 삭제
+                  </button>
+                </>
+              )}
+              <label className="select-all-checkbox">
+                <input
+                  type="checkbox"
+                  checked={selectedTrackings.size === trackingList.length && trackingList.length > 0}
+                  onChange={handleToggleAll}
+                />
+                <span>전체 선택</span>
+              </label>
+            </div>
+          </div>
           <div className="tracking-list">
             {trackingList.map((item) => {
               const lastInfo = getLastTrackingInfo(item.trackingResult);
               return (
                 <div key={item.id} className="tracking-item">
                   <div className="tracking-item-header">
+                    <div className="tracking-item-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selectedTrackings.has(item.trackingNumber)}
+                        onChange={() => handleToggleTracking(item.trackingNumber)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
                     <div className="tracking-item-info">
                       <div className="tracking-number">{item.trackingNumber}</div>
                       <div className="carrier-name">{item.carrierName}</div>

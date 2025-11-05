@@ -9,7 +9,8 @@ const DEFAULT_SETTINGS = {
   notifyOnShipment: false,
   notifyOnDelay: true,
   notifyOnDelivery: false,
-  notifyOnException: false
+  notifyOnException: false,
+  autoDeleteCompleted: true // 배송 완료 후 4시간 자동 삭제
 };
 
 // 설정 저장

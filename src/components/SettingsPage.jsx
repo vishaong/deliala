@@ -12,7 +12,8 @@ function SettingsPage() {
     notifyOnShipment: false,
     notifyOnDelay: true,
     notifyOnDelivery: false,
-    notifyOnException: false
+    notifyOnException: false,
+    autoDeleteCompleted: true // 배송 완료 후 4시간 자동 삭제
   });
   const [saved, setSaved] = useState(false);
 
@@ -175,10 +176,26 @@ function SettingsPage() {
             <option value={120}>2시간</option>
             <option value={240}>4시간</option>
             <option value={480}>8시간</option>
+            <option value={720}>12시간</option>
+            <option value={1440}>24시간</option>
           </select>
           <small style={{ color: '#7f8c8d', marginTop: '5px', display: 'block' }}>
             등록된 송장의 배송 상태를 확인하는 주기입니다. 짧을수록 빠르게 알림을 받지만 API 사용량이 증가합니다.
           </small>
+        </div>
+        <div className="notification-item" style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e1e8ed' }}>
+          <div className="notification-info">
+            <h3>배송 완료 자동 삭제</h3>
+            <p>배송이 완료된 송장을 완료 후 4시간이 지나면 자동으로 삭제합니다</p>
+          </div>
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={settings.autoDeleteCompleted}
+              onChange={(e) => handleInputChange('autoDeleteCompleted', e.target.checked)}
+            />
+            <span className="slider"></span>
+          </label>
         </div>
       </div>
 

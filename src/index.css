@@ -247,6 +247,48 @@ body {
 }
 
 /* 송장 목록 스타일 */
+.tracking-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.tracking-list-header h2 {
+  margin: 0;
+}
+
+.tracking-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.selected-count {
+  color: #3498db;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.select-all-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.select-all-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
 .tracking-list {
   display: flex;
   flex-direction: column;
@@ -271,6 +313,20 @@ body {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 15px;
+  gap: 15px;
+}
+
+.tracking-item-checkbox {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+
+.tracking-item-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  margin: 0;
 }
 
 .tracking-item-info {
@@ -581,5 +637,19 @@ input:checked + .slider:before {
 
   .card-header h2 {
     text-align: center;
+  }
+
+  .tracking-list-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tracking-list-actions {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .tracking-item-header {
+    gap: 10px;
   }
 }

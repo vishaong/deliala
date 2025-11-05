@@ -1,7 +1,7 @@
 // 배송 상태 모니터링 서비스
 
 import { trackDelivery } from './api';
-import { updateTrackingData, getTrackingData } from './trackingStorage';
+import { updateTrackingData, getTrackingData, deleteTrackingData } from './trackingStorage';
 import { getSettings } from './settingsStorage';
 import { sendSlackNotification, createNotificationMessage } from './slackService';
 
@@ -57,6 +57,9 @@ class MonitoringService {
       }
 
       console.log(`${trackingList.length}개의 송장을 확인합니다.`);
+
+      // 자동 삭제 처리 (배송 완료된 송장 중 4시간 경과된 것 삭제)
+      await this.autoDeleteCompletedTrackings();
 
       for (const trackingData of trackingList) {
         await this.checkTrackingStatus(trackingData);
@@ -205,6 +208,68 @@ class MonitoringService {
       lastStep.where.includes(keyword) || 
       (lastStep.kind && lastStep.kind.includes(keyword))
     );
+  }
+
+  // 배송 완료된 송장 자동 삭제 (4시간 경과 후)
+  async autoDeleteCompletedTrackings() {
+    const settings = getSettings();
+    
+    // 자동 삭제 옵션이 꺼져있으면 실행하지 않음
+    if (!settings.autoDeleteCompleted) {
+      return;
+    }
+
+    try {
+      const trackingList = getTrackingData();
+      const now = new Date();
+      const fourHoursInMs = 4 * 60 * 60 * 1000; // 4시간을 밀리초로 변환
+
+      for (const trackingData of trackingList) {
+        // 배송이 완료된 송장인지 확인
+        if (!trackingData.trackingResult || !trackingData.trackingResult.complete) {
+          continue;
+        }
+
+        // 완료 시간 추정 (마지막 배송 단계의 시간 또는 lastUpdated 사용)
+        let completedTime = null;
+        
+        if (trackingData.trackingResult.trackingDetails && 
+            trackingData.trackingResult.trackingDetails.length > 0) {
+          // 마지막 배송 단계의 시간 사용
+          const lastStep = trackingData.trackingResult.trackingDetails[
+            trackingData.trackingResult.trackingDetails.length - 1
+          ];
+          
+          if (lastStep.timeString) {
+            // timeString을 파싱하여 날짜 객체 생성
+            // 형식: "2024-01-01 12:00:00" 또는 다른 형식
+            try {
+              completedTime = new Date(lastStep.timeString);
+              // 유효하지 않은 날짜인 경우 lastUpdated 사용
+              if (isNaN(completedTime.getTime())) {
+                completedTime = new Date(trackingData.lastUpdated);
+              }
+            } catch (e) {
+              completedTime = new Date(trackingData.lastUpdated);
+            }
+          } else {
+            completedTime = new Date(trackingData.lastUpdated);
+          }
+        } else {
+          completedTime = new Date(trackingData.lastUpdated);
+        }
+
+        // 4시간 이상 경과했는지 확인
+        const hoursSinceCompletion = (now - completedTime) / (1000 * 60 * 60);
+        
+        if (hoursSinceCompletion >= 4) {
+          console.log(`배송 완료 후 4시간 경과: 송장 ${trackingData.trackingNumber} 자동 삭제`);
+          deleteTrackingData(trackingData.trackingNumber);
+        }
+      }
+    } catch (error) {
+      console.error('자동 삭제 처리 중 오류:', error);
+    }
   }
 
   // 모니터링 상태 확인
